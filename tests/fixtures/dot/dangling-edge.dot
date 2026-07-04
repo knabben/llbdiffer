@@ -1,0 +1,4 @@
+digraph {
+  "sha256:aaa" [label="only declared node" shape="box"];
+  "sha256:aaa" -> "sha256:never-declared";
+}
