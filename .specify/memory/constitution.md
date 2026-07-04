@@ -1,16 +1,20 @@
 <!--
 Sync Impact Report
 ==================
-Version change: TEMPLATE → 1.0.0 (initial ratification)
-Modified principles: n/a (first concrete adoption; template placeholders replaced)
+Version change: 1.0.0 → 2.0.0
+Modified principles:
+  - III. Static-First, Network-Optional → III. Self-Contained Single-Container
+    Deployment, No External Dependencies
+    (Backward-incompatible redefinition: the tool now ships a real Next.js
+    backend as its primary architecture, running inside one Docker container,
+    rather than being a purely static/no-backend tool. The part of the
+    original intent that is preserved: zero dependency on any *external*
+    third-party or hosted service, with the opt-in LLM analysis call as the
+    sole exception.)
 Added sections:
-  - Core Principles I–IV (Schema Normalization, Diff-as-Artifact,
-    Static-First & Network-Optional, Advisory LLM Analysis)
-  - Architecture Constraints
-  - Development Workflow
-  - Governance
-Removed sections:
-  - Generic Principle 5 slot (only 4 principles were specified; not filled)
+  - Architecture Constraints: new bullet on single-Docker-image deployment
+    with no required external services.
+Removed sections: none
 Templates requiring updates:
   - .specify/templates/plan-template.md ✅ no change needed (Constitution
     Check gate is derived dynamically from this file at plan time)
@@ -27,7 +31,7 @@ Follow-up TODOs: none
 
 ### I. Normalize to One Internal Schema
 All ingested artifacts MUST pass through an adapter layer before reaching the
-diff engine or visualizer. If an input JSON file does not already match the
+diff engine or visualizer. If an input file does not already match the
 tool's common internal graph shape, an adapter MUST transform it into that
 shape as a discrete, isolated step; the diff engine and visualizer MUST NOT
 contain source-format-specific logic. Supporting a new source format MUST
@@ -46,17 +50,24 @@ saved, shared, diffed-of-diffs, or handed to an LLM independently of the
 visualizer running. Treating the diff as a first-class artifact keeps it
 inspectable and reproducible on its own terms.
 
-### III. Static-First, Network-Optional
-The visualizer MUST function as a static local tool requiring zero network
-access for loading artifacts, computing diffs, and rendering graphs. The
-only permitted exception is the LLM analysis feature, which MUST be opt-in
-and MUST be isolated behind a single, clearly named integration boundary
-that no other part of the tool depends on. If the LLM feature is never
-invoked, the rest of the tool MUST work fully offline.
-**Rationale**: A backend or always-on network dependency raises the cost of
-running, auditing, and trusting the tool for what is fundamentally a local,
-inspectable diffing workflow; the one exception is scoped tightly so it
-can't quietly expand into a hard dependency.
+### III. Self-Contained Single-Container Deployment, No External Dependencies
+The tool MUST ship and run as a single Next.js application (frontend and
+backend in one codebase), packaged and deployed as a single Docker
+container. The backend MUST perform the tool's core job — accepting
+artifact uploads, running the adapter and diff pipeline, and serving the
+rendered result — entirely within that container, with zero outbound
+network calls to any external or third-party service. The only exception is
+the LLM analysis feature, which MUST remain opt-in and MUST be isolated
+behind a single, clearly named integration boundary that no other part of
+the tool depends on. If the LLM feature is never invoked, the running
+container MUST require no outbound network access at all.
+**Rationale**: The core diffing workflow requires a running server to accept
+uploads and orchestrate the pipeline, so "no backend at all" is no longer an
+accurate constraint. What must still hold is the original intent: the tool
+is fully self-hosted and self-sufficient, with no external database,
+third-party API, or hosted service the user doesn't control, except the one
+explicit, opt-in LLM call. This keeps the tool auditable and
+trustworthy-by-default without pretending it has no backend.
 
 ### IV. LLM Analysis Is Advisory, Not Ground Truth
 Output from the LLM analysis feature MUST be visually and structurally
@@ -71,12 +82,17 @@ ground truth about what actually changed between two graphs.
 
 ## Architecture Constraints
 
-- No server-side or hosted backend component may be introduced except the
+- The tool's own Next.js backend, running inside the single Docker
+  container, is the primary architecture, not an exception. No OTHER
+  external, third-party, or hosted service may be introduced except the
   narrow LLM analysis integration point described in Principle III.
-- The adapter layer, diff engine, and renderer MUST be usable independently
-  of one another (e.g., invocable from a CLI or script, not just through the
-  full UI), so the diff artifact can be produced and inspected without ever
-  opening the visualizer.
+- The entire application (frontend, backend, and all pipeline logic) MUST
+  be deployable as one Docker image with no required external services
+  (databases, queues, third-party APIs) other than the opt-in LLM call.
+- The adapter layer, diff engine, and renderer MUST be implemented as
+  modules usable independently of the HTTP/API layer (e.g., unit-testable
+  without a running server), so the diff artifact's correctness can be
+  verified without exercising the full upload flow.
 - The diff artifact's schema MUST be versioned so that changes to its shape
   are explicit and detectable by tooling that consumes saved diffs.
 
@@ -89,9 +105,12 @@ ground truth about what actually changed between two graphs.
 - Any UI surface that displays LLM output MUST be reviewed for whether it
   could be mistaken for diff data; ambiguous presentations (e.g., inline
   merging of LLM text into diff node/edge labels) MUST be rejected in review.
-- Changes that would require network access for the non-LLM code paths MUST
-  be rejected or redesigned; this is treated as a violation of Principle III,
-  not a performance or scope tradeoff to be weighed case by case.
+- Changes that would require the non-LLM code paths to call any external or
+  third-party network service MUST be rejected or redesigned; this is
+  treated as a violation of Principle III. Internal calls between the
+  Next.js frontend and its own backend, within the same container, are not
+  a violation — only calls leaving the container (other than the opt-in LLM
+  call) are.
 
 ## Governance
 
@@ -102,15 +121,16 @@ whether the change affects the plan, spec, or tasks templates, with any
 required updates made in the same amendment.
 
 **Versioning policy**: MAJOR versions cover backward-incompatible removals
-or redefinitions of a principle (e.g., dropping the static-first constraint
-or merging LLM output into the diff schema). MINOR versions cover new
+or redefinitions of a principle (e.g., redefining the deployment/network
+model or merging LLM output into the diff schema). MINOR versions cover new
 principles or materially expanded guidance. PATCH versions cover wording,
 clarification, or typo fixes with no semantic change.
 
-**Compliance review**: Any plan or PR that introduces a network dependency
-outside the LLM analysis boundary, a source-format-specific branch in the
-diff engine or visualizer, or a UI element that blends LLM commentary with
-diff data MUST document the deviation and justification explicitly, per
-Principle III and IV, before merging.
+**Compliance review**: Any plan or PR that introduces a dependency on an
+external or third-party service outside the LLM analysis boundary, a
+source-format-specific branch in the diff engine or visualizer, or a UI
+element that blends LLM commentary with diff data MUST document the
+deviation and justification explicitly, per Principle III and IV, before
+merging.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-04 | **Last Amended**: 2026-07-04
+**Version**: 2.0.0 | **Ratified**: 2026-07-04 | **Last Amended**: 2026-07-04
