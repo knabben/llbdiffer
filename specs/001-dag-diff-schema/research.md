@@ -81,6 +81,21 @@ no-external-dependency requirement.
 output — rejected: larger image, slower builds, no benefit for this
 project's scope.
 
+**Gotchas hit during implementation** (both confirmed by actually running
+`make build`/`make test` against the real Docker image, not assumed):
+- Next.js's SWC compiler needs `apk add --no-cache libc6-compat` in any
+  Alpine-based build stage; without it, the native SWC binary fails to load
+  under musl.
+- `package-lock.json` must be generated (`npm install`, not just `npm ci`)
+  on the same libc as the target container. A lockfile generated on a glibc
+  host silently omits the musl-specific optional native dependency for at
+  least one transitive dependency (`@rollup/rollup-linux-x64-musl`, pulled
+  in by Vitest), which then fails inside the Alpine `deps` stage with
+  `MODULE_NOT_FOUND` — a known npm optional-dependency bug
+  (npm/cli#4828). Practical implication: regenerate the lockfile via
+  `docker run --rm -v $(pwd):/app -w /app node:20-alpine npm install`
+  (or equivalent) whenever dependencies change, not via a host npm install.
+
 ## Build/test/dev workflow: Docker-only via Make
 
 **Decision**: All developer-facing workflows — build, dev server, lint, and

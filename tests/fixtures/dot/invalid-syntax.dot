@@ -1,0 +1,4 @@
+digraph {
+  "sha256:aaa" [label="broken node"
+  "sha256:aaa" -> "sha256:bbb"
+}

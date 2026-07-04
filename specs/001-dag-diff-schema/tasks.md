@@ -32,12 +32,12 @@ inside.
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Initialize Next.js (App Router, TypeScript) project scaffold — `package.json`, `next.config.js` (with `output: 'standalone'`), `tsconfig.json` at repo root
-- [ ] T002 [P] Add the DOT parser dependency (per research.md decision) and Vitest as devDependencies in `package.json`
-- [ ] T003 [P] Configure ESLint + Prettier for the TypeScript/Next.js project
-- [ ] T004 [P] Write the multi-stage `Dockerfile` with a reusable `deps` stage, a `build` stage, and a `node:20-alpine` `runner` stage using the standalone output, per research.md
-- [ ] T005 [P] Configure Vitest (`vitest.config.ts`) to discover `tests/unit/**` and `tests/integration/**`
-- [ ] T006 Write the root `Makefile` with `build`, `dev`, `lint`, and `test` targets, each running via `docker build`/`docker run` against the Dockerfile's `deps`/`runner` stages (no target may assume host Node.js/npm), per research.md
+- [X] T001 Initialize Next.js (App Router, TypeScript) project scaffold — `package.json`, `next.config.js` (with `output: 'standalone'`), `tsconfig.json` at repo root
+- [X] T002 [P] Add the DOT parser dependency (per research.md decision) and Vitest as devDependencies in `package.json`
+- [X] T003 [P] Configure ESLint + Prettier for the TypeScript/Next.js project
+- [X] T004 [P] Write the multi-stage `Dockerfile` with a reusable `deps` stage, a `build` stage, and a `node:20-alpine` `runner` stage using the standalone output, per research.md
+- [X] T005 [P] Configure Vitest (`vitest.config.ts`) to discover `tests/unit/**` and `tests/integration/**`
+- [X] T006 Write the root `Makefile` with `build`, `dev`, `lint`, and `test` targets, each running via `docker build`/`docker run` against the Dockerfile's `deps`/`runner` stages (no target may assume host Node.js/npm), per research.md
 
 ---
 
@@ -47,11 +47,11 @@ inside.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T007 Define the canonical `Artifact`/`Node`/`Edge` types (including `schemaVersion` and `metadata.command`) in `src/models/artifact.ts` per data-model.md
-- [ ] T008 Implement DOT-text → intermediate AST parsing in `src/adapters/dot/parse.ts` using the library chosen in research.md
-- [ ] T009 [P] Implement AST → canonical `Artifact` mapping (label → `metadata.command`) in `src/adapters/dot/adapt.ts` (depends on T007, T008)
-- [ ] T010 Implement structural validation (parse-failure surfacing, dangling-edge detection) in `src/validation/artifact.ts` (depends on T007)
-- [ ] T011 Scaffold the `POST /api/artifacts` route handler — read `left`/`right` from `Request.formData()`, check both fields are present — in `app/api/artifacts/route.ts` (depends on T007)
+- [X] T007 Define the canonical `Artifact`/`Node`/`Edge` types (including `schemaVersion` and `metadata.command`) in `src/models/artifact.ts` per data-model.md
+- [X] T008 Implement DOT-text → intermediate AST parsing in `src/adapters/dot/parse.ts` using the library chosen in research.md
+- [X] T009 [P] Implement AST → canonical `Artifact` mapping (label → `metadata.command`) in `src/adapters/dot/adapt.ts` (depends on T007, T008)
+- [X] T010 Implement structural validation (parse-failure surfacing, dangling-edge detection) in `src/validation/artifact.ts` (depends on T007)
+- [X] T011 Scaffold the `POST /api/artifacts` route handler — read `left`/`right` from `Request.formData()`, check both fields are present — in `app/api/artifacts/route.ts` (depends on T007)
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 
@@ -70,14 +70,14 @@ app) and confirms a 200 response matching the shape in
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Integration test: POST two valid `.dot` fixtures to `/api/artifacts`, assert 200 response matches the canonical shape, in `tests/integration/api/artifacts/happy-path.test.ts`
-- [ ] T013 [P] [US1] Unit test: adapter preserves a structured/free-form label (e.g. `copy{src=..., dest=...}`) verbatim in `metadata.command`, in `tests/unit/adapters/dot/adapt.test.ts`
+- [X] T012 [P] [US1] Integration test: POST two valid `.dot` fixtures to `/api/artifacts`, assert 200 response matches the canonical shape, in `tests/integration/api/artifacts/happy-path.test.ts`
+- [X] T013 [P] [US1] Unit test: adapter preserves a structured/free-form label (e.g. `copy{src=..., dest=...}`) verbatim in `metadata.command`, in `tests/unit/adapters/dot/adapt.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Wire the route handler to parse + adapt both `left` and `right` uploads and return the 200 JSON body per contracts/artifacts-upload.md, in `app/api/artifacts/route.ts` (depends on T008, T009, T011)
-- [ ] T015 [P] [US1] Add small valid BuildKit-style `.dot` fixtures in `tests/fixtures/dot/valid-before.dot` and `tests/fixtures/dot/valid-after.dot`
-- [ ] T016 [US1] Add a 20MB-per-file upload size guard in `app/api/artifacts/route.ts` (depends on T014)
+- [X] T014 [US1] Wire the route handler to parse + adapt both `left` and `right` uploads and return the 200 JSON body per contracts/artifacts-upload.md, in `app/api/artifacts/route.ts` (depends on T008, T009, T011)
+- [X] T015 [P] [US1] Add small valid BuildKit-style `.dot` fixtures in `tests/fixtures/dot/valid-before.dot` and `tests/fixtures/dot/valid-after.dot`
+- [X] T016 [US1] Add a 20MB-per-file upload size guard in `app/api/artifacts/route.ts` (depends on T014)
 
 **Checkpoint**: User Story 1 is fully functional and testable independently (MVP) — verify with `make test` and `make dev` + `curl`, per quickstart.md
 
@@ -97,15 +97,15 @@ contracts/artifacts-upload.md.
 
 ### Tests for User Story 2
 
-- [ ] T017 [P] [US2] Integration test: malformed DOT syntax → 400 with `DOT_PARSE_ERROR`, in `tests/integration/api/artifacts/invalid-dot.test.ts`
-- [ ] T018 [P] [US2] Integration test: dangling edge reference → 400 with `DANGLING_EDGE_REFERENCE`, in `tests/integration/api/artifacts/dangling-edge.test.ts`
-- [ ] T019 [P] [US2] Unit test: validation module reports independent errors when both sides are invalid (no fail-fast on the first), in `tests/unit/validation/artifact.test.ts`
+- [X] T017 [P] [US2] Integration test: malformed DOT syntax → 400 with `DOT_PARSE_ERROR`, in `tests/integration/api/artifacts/invalid-dot.test.ts`
+- [X] T018 [P] [US2] Integration test: dangling edge reference → 400 with `DANGLING_EDGE_REFERENCE`, in `tests/integration/api/artifacts/dangling-edge.test.ts`
+- [X] T019 [P] [US2] Unit test: validation module reports independent errors when both sides are invalid (no fail-fast on the first), in `tests/unit/validation/artifact.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Implement per-side validation and error-code assignment (`MISSING_FILE`, `UNSUPPORTED_FORMAT`, `DOT_PARSE_ERROR`, `DANGLING_EDGE_REFERENCE`) in `src/validation/artifact.ts` (depends on T010)
-- [ ] T021 [US2] Wire validation failures into the route handler's 400 response shape (`{ errors: { left, right } }`) per contracts/artifacts-upload.md, in `app/api/artifacts/route.ts` (depends on T014, T020)
-- [ ] T022 [P] [US2] Add malformed-syntax and dangling-edge `.dot` fixtures in `tests/fixtures/dot/invalid-syntax.dot` and `tests/fixtures/dot/dangling-edge.dot`
+- [X] T020 [US2] Implement per-side validation and error-code assignment (`MISSING_FILE`, `UNSUPPORTED_FORMAT`, `DOT_PARSE_ERROR`, `DANGLING_EDGE_REFERENCE`) in `src/validation/artifact.ts` (depends on T010)
+- [X] T021 [US2] Wire validation failures into the route handler's 400 response shape (`{ errors: { left, right } }`) per contracts/artifacts-upload.md, in `app/api/artifacts/route.ts` (depends on T014, T020)
+- [X] T022 [P] [US2] Add malformed-syntax and dangling-edge `.dot` fixtures in `tests/fixtures/dot/invalid-syntax.dot` and `tests/fixtures/dot/dangling-edge.dot`
 
 **Checkpoint**: User Stories 1 AND 2 both work independently — verify with `make test`
 
@@ -126,14 +126,14 @@ correctly.
 
 ### Tests for User Story 3
 
-- [ ] T023 [P] [US3] Unit test: a node with no explicit `label` attribute defaults `metadata.command` to the node id, in `tests/unit/adapters/dot/adapt.test.ts`
-- [ ] T024 [P] [US3] Unit test: extra DOT node attributes (e.g. `shape`) are preserved as additional opaque `metadata` keys without validation, in `tests/unit/adapters/dot/adapt.test.ts`
+- [X] T023 [P] [US3] Unit test: a node with no explicit `label` attribute defaults `metadata.command` to the node id, in `tests/unit/adapters/dot/adapt.test.ts`
+- [X] T024 [P] [US3] Unit test: extra DOT node attributes (e.g. `shape`) are preserved as additional opaque `metadata` keys without validation, in `tests/unit/adapters/dot/adapt.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Extend `src/adapters/dot/adapt.ts` to pass through additional DOT node attributes (e.g. `shape`) into `metadata` beyond `command` (depends on T009)
-- [ ] T026 [US3] Extend `src/adapters/dot/adapt.ts` with the default-label-to-id fallback per FR-008 (depends on T009)
-- [ ] T027 [P] [US3] Add a short header comment in `src/adapters/dot/adapt.ts` documenting that no other module may import the DOT parser library directly, enforcing the Principle I adapter boundary
+- [X] T025 [US3] Extend `src/adapters/dot/adapt.ts` to pass through additional DOT node attributes (e.g. `shape`) into `metadata` beyond `command` (depends on T009)
+- [X] T026 [US3] Extend `src/adapters/dot/adapt.ts` with the default-label-to-id fallback per FR-008 (depends on T009)
+- [X] T027 [P] [US3] Add a short header comment in `src/adapters/dot/adapt.ts` documenting that no other module may import the DOT parser library directly, enforcing the Principle I adapter boundary
 
 **Checkpoint**: All three user stories are independently functional — verify with `make test`
 
@@ -143,9 +143,9 @@ correctly.
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T028 [P] Run the quickstart.md validation end-to-end (`make build`, `make dev` or the built image, `curl` the endpoint with real fixtures)
-- [ ] T029 [P] Add a root-level `README.md` documenting the `make` targets and the `/api/artifacts` contract
-- [ ] T030 Review `src/adapters/dot/` to confirm no DOT-specific types or parser-library imports have leaked into `src/models/`, `src/validation/`, or `app/api/`, per Principle I
+- [X] T028 [P] Run the quickstart.md validation end-to-end (`make build`, `make dev` or the built image, `curl` the endpoint with real fixtures)
+- [X] T029 [P] Add a root-level `README.md` documenting the `make` targets and the `/api/artifacts` contract
+- [X] T030 Review `src/adapters/dot/` to confirm no DOT-specific types or parser-library imports have leaked into `src/models/`, `src/validation/`, or `app/api/`, per Principle I
 
 ---
 

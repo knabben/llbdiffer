@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+coverage
+.git
+.gitignore
+.claude
+.specify
+specs
+*.md
+Dockerfile
+.dockerignore
+.env*
+npm-debug.log*

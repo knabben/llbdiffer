@@ -1,0 +1,13 @@
+digraph {
+  "sha256:db139405ef52076a3f9f245d778e9f130216a7bd89b5766fb6d39fc2f6fa7d68" [label="docker-image://docker.io/library/alpine:3.19@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1" shape="ellipse"];
+  "sha256:d79a7db6c8d63de4074278c487fb5ef09ca5466f9dcf6b187246a7fc7444a72e" [label="local://context" shape="ellipse"];
+  "sha256:6eb57b7e14687f129e08fe01962b81d7d217a8164bd30b35b6c4554f54d26d6a" [label="copy{src=/app.sh, dest=/usr/local/bin/app.sh}" shape="note"];
+  "sha256:af0c1c2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8" [label="/bin/sh -c apk add --no-cache curl=8.15.0-r0 git=2.43.7-r0" shape="box"];
+  "sha256:4219d80a0574e49c503733ed464fe586b8033647ff5b3e4c77fb89e8bc26c2a3" [label="/bin/sh -c chmod +x /usr/local/bin/app.sh" shape="box"];
+  "sha256:9a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8e9" [label="sha256:9a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8e9" shape="plaintext"];
+  "sha256:db139405ef52076a3f9f245d778e9f130216a7bd89b5766fb6d39fc2f6fa7d68" -> "sha256:6eb57b7e14687f129e08fe01962b81d7d217a8164bd30b35b6c4554f54d26d6a" [label=""];
+  "sha256:d79a7db6c8d63de4074278c487fb5ef09ca5466f9dcf6b187246a7fc7444a72e" -> "sha256:6eb57b7e14687f129e08fe01962b81d7d217a8164bd30b35b6c4554f54d26d6a" [label=""];
+  "sha256:6eb57b7e14687f129e08fe01962b81d7d217a8164bd30b35b6c4554f54d26d6a" -> "sha256:af0c1c2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8" [label=""];
+  "sha256:af0c1c2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8" -> "sha256:4219d80a0574e49c503733ed464fe586b8033647ff5b3e4c77fb89e8bc26c2a3" [label=""];
+  "sha256:4219d80a0574e49c503733ed464fe586b8033647ff5b3e4c77fb89e8bc26c2a3" -> "sha256:9a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8e9" [label=""];
+}

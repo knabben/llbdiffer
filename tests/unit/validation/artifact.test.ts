@@ -1,0 +1,46 @@
+import { describe, it, expect } from 'vitest';
+import { isSupportedDotFile, validateAndAdapt } from '../../../src/validation/artifact';
+import { readDotFixture } from '../../utils/fixtures';
+
+describe('isSupportedDotFile (FR-011)', () => {
+  it('accepts a .dot filename with a graphviz content type', () => {
+    expect(isSupportedDotFile('before.dot', 'text/vnd.graphviz')).toBe(true);
+  });
+
+  it('rejects a non-.dot filename', () => {
+    expect(isSupportedDotFile('before.json', 'application/json')).toBe(false);
+  });
+});
+
+describe('validateAndAdapt', () => {
+  it('returns ok:true with the canonical artifact for valid DOT', () => {
+    const result = validateAndAdapt(readDotFixture('valid-before.dot'));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.artifact.schemaVersion).toBe('1.0.0');
+    }
+  });
+
+  it('returns a DOT_PARSE_ERROR for malformed syntax', () => {
+    const result = validateAndAdapt(readDotFixture('invalid-syntax.dot'));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('DOT_PARSE_ERROR');
+    }
+  });
+
+  it('returns a DANGLING_EDGE_REFERENCE for an edge to an undeclared node', () => {
+    const result = validateAndAdapt(readDotFixture('dangling-edge.dot'));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('DANGLING_EDGE_REFERENCE');
+    }
+  });
+
+  it('validates each side independently (no shared state between calls)', () => {
+    const validResult = validateAndAdapt(readDotFixture('valid-before.dot'));
+    const invalidResult = validateAndAdapt(readDotFixture('invalid-syntax.dot'));
+    expect(validResult.ok).toBe(true);
+    expect(invalidResult.ok).toBe(false);
+  });
+});
