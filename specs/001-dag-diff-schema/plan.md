@@ -22,9 +22,12 @@ database or ORM
 **Storage**: N/A — artifacts are parsed and adapted in-memory per request;
 this feature persists nothing
 **Testing**: Vitest for unit tests (adapter, validation) and integration
-tests (API route), run in CI and inside the Docker build
+tests (API route); tests always run inside a container (via `make test`),
+never against a host-installed Node.js
 **Target Platform**: Single Docker container (Node 20-alpine), Linux,
-self-hosted (no PaaS/cloud service dependency)
+self-hosted (no PaaS/cloud service dependency). All workflows — build, dev
+server, lint, test — run exclusively through Docker via `make` targets; the
+host is not assumed to have Node.js, npm, or any project dependency installed
 **Project Type**: Web application — one Next.js project serving both
 frontend and backend (not a split frontend/backend repo layout)
 **Performance Goals**: Parse, validate, and adapt a single BuildKit `.dot`
@@ -33,9 +36,11 @@ per upload; this is a low-throughput, single/small-team tool, not a
 high-concurrency service
 **Constraints**: Zero outbound network calls anywhere in this feature (no
 LLM involvement in ingestion); must build and run via `docker build` /
-`docker run` alone, no external services; uploads capped at a reasonable
-size (assumed 20MB per `.dot` file, see research.md) to bound parse time and
-memory
+`docker run` alone, no external services; no workflow (build, dev, lint,
+test) may assume a host-installed Node.js/npm — all of them run inside a
+container via `make` targets (see research.md); uploads capped at a
+reasonable size (assumed 20MB per `.dot` file, see research.md) to bound
+parse time and memory
 **Scale/Scope**: Single-user or small-team self-hosted use, per the
 constitution's self-contained-container principle; not designed for
 multi-tenant SaaS scale
@@ -103,7 +108,8 @@ tests/
 └── integration/
     └── api/artifacts/        # route.ts upload-flow tests
 
-Dockerfile
+Dockerfile              # multi-stage: deps -> build -> runner (standalone)
+Makefile                # build/dev/lint/test targets, all docker-only
 next.config.js
 package.json
 ```

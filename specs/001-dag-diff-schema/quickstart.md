@@ -3,13 +3,14 @@
 ## Run it
 
 ```bash
-docker build -t llbdiffer .
-docker run -p 3000:3000 llbdiffer
+make build   # docker build -t llbdiffer .
+make dev     # run the dev server in a container, port 3000
 ```
 
 No environment variables, database, or external service is required for
 this feature — the container is fully self-contained per the constitution's
-Principle III.
+Principle III. Nothing here assumes Node.js or npm installed on the host;
+every target below runs inside Docker.
 
 ## Try the upload endpoint
 
@@ -32,12 +33,12 @@ artifact schema (`schemaVersion`, `nodes`, `edges`, each node carrying a
 `contracts/artifacts-upload.md` for the full response shape and error
 codes.
 
-## Local development
+## Development workflow (all Docker, no local Node.js/npm)
 
 ```bash
-npm install
-npm run dev       # Next.js dev server
-npm test          # Vitest unit + integration tests
+make dev     # Next.js dev server in a container, source mounted for hot reload
+make test    # Vitest unit + integration tests, run inside a container
+make lint    # ESLint, run inside a container
 ```
 
 ## What this feature does NOT do yet

@@ -67,7 +67,10 @@ greenfield project with no existing Jest setup to preserve.
 
 **Decision**: Multi-stage Dockerfile using Next.js's `output: 'standalone'`
 build mode, with a `node:20-alpine` runtime stage containing only the
-standalone server output and static assets.
+standalone server output and static assets. The multi-stage build exposes a
+reusable `deps` stage (installed `node_modules`, no build/compile step yet)
+in addition to the final `runner` stage, so the same stage can be reused for
+running tests and lint, not just the production image.
 
 **Rationale**: `output: 'standalone'` produces a minimal, self-contained
 server bundle (no `node_modules` pruning step required), which is the
@@ -77,3 +80,32 @@ no-external-dependency requirement.
 **Alternatives considered**: Full `node_modules` copy without standalone
 output — rejected: larger image, slower builds, no benefit for this
 project's scope.
+
+## Build/test/dev workflow: Docker-only via Make
+
+**Decision**: All developer-facing workflows — build, dev server, lint, and
+test — run exclusively inside Docker, invoked through a root-level
+`Makefile` (`make build`, `make dev`, `make lint`, `make test`). None of
+these targets assume Node.js, npm, or any dependency installed on the host;
+each one builds (or reuses) the Dockerfile's `deps` stage and runs the
+actual command (`npm run dev`, `npm test`, `npm run lint`) inside a
+container, mounting the working tree as a volume for `dev`/`test`/`lint` so
+edits are picked up without a rebuild.
+
+**Rationale**: The constitution's self-contained-container principle
+(Principle III) is only really honored if the *whole* workflow — not just
+the shipped production image — never depends on the host environment. If
+tests or the dev server are run via bare `npm` commands, host Node version
+drift becomes a real source of "works on my machine" bugs and silently
+reintroduces a dependency the constitution is meant to rule out. Routing
+everything through `make` also gives contributors one command surface
+regardless of what's installed locally.
+
+**Alternatives considered**:
+- Plain `npm` scripts run directly on the host — rejected per the above;
+  this is exactly what's being ruled out.
+- `docker-compose` instead of a `Makefile` — considered, but rejected as
+  unnecessary complexity for a single-image project; a `Makefile` wrapping
+  `docker build`/`docker run` achieves the same one-command-per-workflow
+  goal without introducing a second config file and a multi-service mental
+  model this project doesn't need.
