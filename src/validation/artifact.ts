@@ -16,13 +16,21 @@ export interface ArtifactError {
 export type ArtifactResult = { ok: true; artifact: Artifact } | { ok: false; error: ArtifactError };
 
 const SUPPORTED_EXTENSIONS = ['.dot'];
-const SUPPORTED_CONTENT_TYPES = ['text/vnd.graphviz', 'text/plain', 'application/octet-stream', ''];
 
-/** FR-011/FR-015: reject files that aren't recognizably DOT before parsing them. */
-export function isSupportedDotFile(filename: string, contentType: string | null | undefined): boolean {
-  const hasSupportedExtension = SUPPORTED_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(ext));
-  const hasSupportedContentType = contentType == null || SUPPORTED_CONTENT_TYPES.includes(contentType);
-  return hasSupportedExtension && hasSupportedContentType;
+// Per research.md (001): reasonable default cap to bound parse time/memory.
+export const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
+
+/**
+ * FR-011/FR-015: reject files that aren't recognizably DOT before parsing
+ * them. Deliberately checks the filename extension ONLY, not the browser's
+ * reported content-type: `.dot` is also the extension Microsoft Word uses
+ * for legacy document templates, so on Windows the browser/OS frequently
+ * reports a `.dot` file's MIME type as `application/msword` (or similar)
+ * rather than anything Graphviz-related — a real false rejection observed
+ * when testing this feature on Windows, not a hypothetical edge case.
+ */
+export function isSupportedDotFile(filename: string): boolean {
+  return SUPPORTED_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(ext));
 }
 
 /**
@@ -45,4 +53,38 @@ export function validateAndAdapt(dotText: string): ArtifactResult {
       error: { code: 'DOT_PARSE_ERROR', message: err instanceof Error ? err.message : String(err) },
     };
   }
+}
+
+/**
+ * Reads and validates one named field from an uploaded FormData request
+ * (size cap, supported format, then parse+adapt). Shared by every route
+ * that accepts a `.dot` upload (`/api/artifacts`, `/api/compare`), so the
+ * MISSING_FILE/UNSUPPORTED_FORMAT rules stay identical across endpoints.
+ */
+export async function validateUploadedField(form: FormData, field: string): Promise<ArtifactResult> {
+  const value = form.get(field);
+
+  if (!(value instanceof File)) {
+    return { ok: false, error: { code: 'MISSING_FILE', message: `Missing required '${field}' file` } };
+  }
+
+  if (value.size > MAX_UPLOAD_SIZE_BYTES) {
+    return {
+      ok: false,
+      error: {
+        code: 'UNSUPPORTED_FORMAT',
+        message: `'${field}' exceeds the ${MAX_UPLOAD_SIZE_BYTES} byte upload limit`,
+      },
+    };
+  }
+
+  if (!isSupportedDotFile(value.name)) {
+    return {
+      ok: false,
+      error: { code: 'UNSUPPORTED_FORMAT', message: `'${value.name}' (${field}) is not a recognized .dot file` },
+    };
+  }
+
+  const dotText = await value.text();
+  return validateAndAdapt(dotText);
 }

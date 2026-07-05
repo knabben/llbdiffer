@@ -14,9 +14,13 @@ file that failed validation.
   | `left`  | file | yes      | First `.dot` artifact to compare. |
   | `right` | file | yes      | Second `.dot` artifact to compare. |
 
-Each file MUST have a `.dot` extension or `text/vnd.graphviz` /
-`text/plain` content type; anything else is rejected per FR-011 without
-attempting to parse it. Each file is capped at 20MB (see research.md).
+Each file MUST have a `.dot` extension; anything else is rejected per
+FR-011 without attempting to parse it. Each file is capped at 20MB (see
+research.md). Only the filename extension is checked — not the browser's
+reported content-type — since `.dot` is also the legacy Microsoft Word
+template extension, and some OS/browser combinations (observed on Windows)
+report a Word-related MIME type for `.dot` files rather than anything
+Graphviz-related.
 
 ## Response — 200 OK
 

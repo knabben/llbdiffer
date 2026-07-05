@@ -3,12 +3,19 @@ import { isSupportedDotFile, validateAndAdapt } from '../../../src/validation/ar
 import { readDotFixture } from '../../utils/fixtures';
 
 describe('isSupportedDotFile (FR-011)', () => {
-  it('accepts a .dot filename with a graphviz content type', () => {
-    expect(isSupportedDotFile('before.dot', 'text/vnd.graphviz')).toBe(true);
+  it('accepts a .dot filename regardless of reported content-type', () => {
+    expect(isSupportedDotFile('before.dot')).toBe(true);
   });
 
   it('rejects a non-.dot filename', () => {
-    expect(isSupportedDotFile('before.json', 'application/json')).toBe(false);
+    expect(isSupportedDotFile('before.json')).toBe(false);
+  });
+
+  it('accepts a .dot file even when the OS/browser reports a Word-template MIME type', () => {
+    // Regression test: on Windows, .dot is also the legacy Microsoft Word
+    // template extension, so the browser may report content-type as
+    // application/msword. Filename extension is the only signal checked.
+    expect(isSupportedDotFile('before.dot')).toBe(true);
   });
 });
 
