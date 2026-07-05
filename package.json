@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@hpcc-js/wasm-graphviz": "^1.24.1",
     "next": "^14.2.0",
     "react": "^18.3.0",

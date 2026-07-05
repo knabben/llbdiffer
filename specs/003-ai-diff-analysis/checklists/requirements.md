@@ -37,4 +37,9 @@
 - No [NEEDS CLARIFICATION] markers needed: server-side-only credentials,
   no caching, no chat/follow-up scope, and "layers" = existing DAG nodes
   all have clear, low-risk reasonable defaults documented in Assumptions.
+- 2026-07-05 clarification: backend integrates via a direct Claude API call
+  only — no MCP server, no tool/function calling, no agentic loop (FR-008a).
+- 2026-07-05 clarification (second round, post-plan/tasks): the project
+  README MUST document how to configure the credentials that enable AI
+  analysis (FR-012).
 - Ready for `/speckit-plan`.

@@ -5,6 +5,24 @@
 **Status**: Draft
 **Input**: User description: "Add an AI analyze button, it must send all the layers and diff information (with commands and labels, boxes) to Claude API and the result must be present on the screen, probably a box explaining exactly the difference between the layers."
 
+## Clarifications
+
+### Session 2026-07-05
+
+- Q: How should the backend integrate with Claude — direct API call, or via
+  an MCP server / tool-calling setup? → A: Direct API call only. The Node
+  backend calls the Claude API directly (a single request with the
+  Analysis Request payload as context, no MCP server, no tools/function
+  calling, no agentic multi-step loop). The backend's only job beyond
+  making that call is parsing the text response and forwarding it to the
+  frontend — it does not interpret, execute, or act on anything the model
+  returns.
+- Q: Should this feature include documentation on how to enable it? → A:
+  Yes — the project README MUST explain how to configure the credentials
+  (e.g. the API key environment variable) needed to turn AI analysis on,
+  since the control is otherwise visible but every request fails per
+  FR-009 until that configuration is in place.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Request an AI explanation of the diff (Priority: P1)
@@ -132,6 +150,11 @@ in the AI panel without disrupting the graphs, hash lists, or diff summary.
 - **FR-008**: System MUST perform the call to the AI provider from the
   backend, not directly from the browser, so that provider credentials are
   never exposed to the client.
+- **FR-008a**: The backend MUST call the Claude API directly — a single
+  request per analysis, with no MCP server, no tool/function calling, and
+  no multi-step agentic loop. The backend's role is limited to sending the
+  Analysis Request as context and parsing the resulting text response; it
+  MUST NOT execute, act on, or grant the model any tool access.
 - **FR-009**: System MUST display a specific, readable error in the AI
   panel if the analysis request fails, with an option to retry, without
   disrupting the rest of the page.
@@ -142,6 +165,10 @@ in the AI panel without disrupting the graphs, hash lists, or diff summary.
 - **FR-011**: Starting a new comparison MUST clear any previously displayed
   AI analysis result, so it can never be mistaken for an explanation of the
   new comparison.
+- **FR-012**: The project MUST include documentation (e.g. in the README)
+  describing how to configure the credentials required to enable AI
+  analysis, so whoever deploys this self-hosted tool knows how to turn the
+  feature on.
 
 ### Key Entities
 

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { ComparePanel } from '../../components/ComparePanel';
 import { DiffSummaryPanel } from '../../components/DiffSummaryPanel';
+import { AnalysisPanel, type AnalysisState } from '../../components/AnalysisPanel';
 import type { DiffSummary } from '../../src/compare/artifact';
 
 interface SidePresentation {
@@ -56,6 +57,7 @@ export default function ComparePage() {
   const [error, setError] = useState<SubmitError | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisState | null>(null);
 
   const canSubmit = leftFile !== null && rightFile !== null && !submitting;
 
@@ -66,6 +68,7 @@ export default function ComparePage() {
     setSubmitting(true);
     setError(null);
     setResult(null);
+    setAnalysis(null);
 
     try {
       const form = new FormData();
@@ -100,6 +103,39 @@ export default function ComparePage() {
     }
   }
 
+  async function runAnalysis() {
+    if (!leftFile || !rightFile) return;
+
+    setAnalysis({ status: 'loading' });
+
+    try {
+      const form = new FormData();
+      form.set('left', leftFile);
+      form.set('right', rightFile);
+
+      const response = await fetch('/api/analyze', { method: 'POST', body: form });
+
+      if (response.status === 502) {
+        const body = await response.json();
+        setAnalysis({ status: 'error', message: body.error.message });
+        return;
+      }
+
+      if (!response.ok) {
+        setAnalysis({
+          status: 'error',
+          message: `AI analysis failed (HTTP ${response.status}). Please try again.`,
+        });
+        return;
+      }
+
+      const body: { analysis: string } = await response.json();
+      setAnalysis({ status: 'result', text: body.analysis });
+    } catch {
+      setAnalysis({ status: 'error', message: 'AI analysis failed due to a network error. Please try again.' });
+    }
+  }
+
   return (
     <main className="mx-auto flex h-screen w-full max-w-[1800px] flex-col gap-6 overflow-hidden px-6 py-8">
       <div className="flex shrink-0 flex-wrap items-center gap-6">
@@ -115,6 +151,14 @@ export default function ComparePage() {
             {submitting ? 'Comparing…' : 'Compare'}
           </button>
         </form>
+        <button
+          type="button"
+          onClick={runAnalysis}
+          disabled={!result || analysis?.status === 'loading'}
+          className="rounded-lg border border-accent px-5 py-2 text-sm font-semibold text-accent disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {analysis?.status === 'loading' ? 'Analyzing…' : 'Analyze with AI'}
+        </button>
       </div>
 
       {error?.kind === 'validation' && (
@@ -160,6 +204,7 @@ export default function ComparePage() {
             highlightedId={highlightedId}
             onHoverId={setHighlightedId}
           />
+          {analysis && <AnalysisPanel state={analysis} onRetry={runAnalysis} className="max-h-56 overflow-auto" />}
         </div>
       )}
     </main>

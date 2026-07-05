@@ -8,6 +8,23 @@ for the full spec, plan, and constitution driving this feature.
 Docker only. No local Node.js/npm install is required or assumed — see
 `.specify/memory/constitution.md` Principle III.
 
+### Enabling AI analysis (optional)
+
+The `/compare` page's "Analyze with AI" button is the one feature that
+makes an outbound network call — a direct request to the Claude API (no
+MCP server, no tool use). It's off by default in the sense that no
+request is ever made unless a user explicitly clicks the button; to make
+those requests succeed, set an API key in the container's environment:
+
+```bash
+docker run --rm -p 3000:3000 -e ANTHROPIC_API_KEY=sk-ant-... llbdiffer
+```
+
+Without `ANTHROPIC_API_KEY` set, the rest of the app works normally — the
+"Analyze with AI" button is still visible, but clicking it returns a
+readable, retry-able error instead of a narrative (see
+`specs/003-ai-diff-analysis/contracts/analyze.md`).
+
 ## Usage
 
 ```bash
@@ -38,6 +55,24 @@ structurally invalid uploads: [specs/001-dag-diff-schema/contracts/artifacts-upl
 This endpoint does not compute a diff or render anything — see
 [specs/001-dag-diff-schema/quickstart.md](specs/001-dag-diff-schema/quickstart.md)
 for what's in and out of scope for this feature.
+
+### `POST /api/analyze`
+
+Accepts the same two `.dot` files as `/api/compare` and returns a
+plain-language narrative from Claude explaining the differences between
+them. Requires `ANTHROPIC_API_KEY` to be set (see "Enabling AI analysis"
+above); without it, this endpoint returns a `502` rather than a narrative.
+
+```bash
+curl -X POST http://localhost:3000/api/analyze \
+  -F "left=@before.dot" \
+  -F "right=@after.dot"
+```
+
+Full request/response contract: [specs/003-ai-diff-analysis/contracts/analyze.md](specs/003-ai-diff-analysis/contracts/analyze.md).
+The returned narrative is advisory commentary, not verified fact — the
+frontend always renders it in a panel separate from the diff graphs and
+diff summary (constitution Principle IV).
 
 ## Extracting a `.dot` file from a Dockerfile
 
