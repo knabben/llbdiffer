@@ -10,13 +10,13 @@ build:
 	docker build -t $(IMAGE) .
 
 dev: deps
-	docker run --rm -it -p 3000:3000 -v $(CURDIR):/app -w /app $(IMAGE)-deps npm run dev
+	docker run --rm -it -p 3000:3000 -v $(CURDIR):/app -v /app/node_modules -w /app $(IMAGE)-deps npm run dev
 
 lint: deps
-	docker run --rm -v $(CURDIR):/app -w /app $(IMAGE)-deps npm run lint
+	docker run --rm -v $(CURDIR):/app -v /app/node_modules -w /app $(IMAGE)-deps npm run lint
 
 typecheck: deps
-	docker run --rm -v $(CURDIR):/app -w /app $(IMAGE)-deps npx tsc --noEmit
+	docker run --rm -v $(CURDIR):/app -v /app/node_modules -w /app $(IMAGE)-deps npx tsc --noEmit
 
 test: deps
-	docker run --rm -v $(CURDIR):/app -w /app $(IMAGE)-deps npm test
+	docker run --rm -v $(CURDIR):/app -v /app/node_modules -w /app $(IMAGE)-deps npm test
