@@ -38,3 +38,26 @@ structurally invalid uploads: [specs/001-dag-diff-schema/contracts/artifacts-upl
 This endpoint does not compute a diff or render anything — see
 [specs/001-dag-diff-schema/quickstart.md](specs/001-dag-diff-schema/quickstart.md)
 for what's in and out of scope for this feature.
+
+## Extracting a `.dot` file from a Dockerfile
+
+BuildKit's `buildctl debug dump-llb --dot` command turns a serialized LLB
+definition into a DOT graph. It reads that definition from stdin and does
+**not** need a running buildkit daemon. To get the LLB definition for a
+plain Dockerfile (without running a full build), BuildKit ships a small
+example tool, `examples/dockerfile2llb`, that reads a Dockerfile from
+stdin and writes the corresponding LLB definition to stdout:
+
+```bash
+# Requires Go and a checkout of github.com/moby/buildkit, plus the
+# buildctl binary (ships with BuildKit releases / most buildkit packages).
+git clone https://github.com/moby/buildkit
+cd buildkit
+
+go run ./examples/dockerfile2llb < /path/to/your/Dockerfile \
+  | buildctl debug dump-llb --dot > before.dot
+```
+
+Run it once per build you want to compare (e.g. before and after a
+Dockerfile change) to produce the two `.dot` files this project's
+endpoints expect.

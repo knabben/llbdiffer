@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { readDotFixture } from '../../../utils/fixtures';
 import { POST } from '../../../../app/api/artifacts/route';

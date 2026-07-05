@@ -1,8 +1,8 @@
 IMAGE ?= llbdiffer
 
-.PHONY: deps build dev lint test
+.PHONY: deps build dev lint typecheck test
 
-# Reusable stage with node_modules installed; underlies dev/lint/test.
+# Reusable stage with node_modules installed; underlies dev/lint/typecheck/test.
 deps:
 	docker build --target deps -t $(IMAGE)-deps .
 
@@ -14,6 +14,9 @@ dev: deps
 
 lint: deps
 	docker run --rm -v $(CURDIR):/app -w /app $(IMAGE)-deps npm run lint
+
+typecheck: deps
+	docker run --rm -v $(CURDIR):/app -w /app $(IMAGE)-deps npx tsc --noEmit
 
 test: deps
 	docker run --rm -v $(CURDIR):/app -w /app $(IMAGE)-deps npm test
