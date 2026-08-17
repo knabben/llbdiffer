@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DeterminismUpload } from '../../components/DeterminismUpload';
 import { DeterminismPanel } from '../../components/DeterminismPanel';
 import { DeterminismGraphPanel } from '../../components/DeterminismGraphPanel';
+import { TopNav } from '../../components/TopNav';
 import type { DeterminismReport } from '../../src/detect/rules';
 
 interface FieldError {
@@ -62,7 +63,8 @@ export default function DeterminismPage() {
   return (
     <main className="mx-auto flex h-screen w-full max-w-[1800px] flex-col gap-6 overflow-hidden px-6 py-8">
       <div className="flex shrink-0 flex-wrap items-center gap-6">
-        <h1 className="whitespace-nowrap text-lg font-medium text-neutral-100">llbdiffer — determinism analysis</h1>
+        <TopNav current="/determinism" />
+        <h1 className="whitespace-nowrap text-lg font-medium text-neutral-100">Determinism analysis</h1>
         <DeterminismUpload onSubmit={handleSubmit} submitting={submitting} />
       </div>
 

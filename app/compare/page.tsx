@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ComparePanel } from '../../components/ComparePanel';
 import { DiffSummaryPanel } from '../../components/DiffSummaryPanel';
 import { AnalysisPanel, type AnalysisState } from '../../components/AnalysisPanel';
+import { TopNav } from '../../components/TopNav';
 import type { DiffSummary } from '../../src/compare/artifact';
 
 interface SidePresentation {
@@ -139,7 +140,8 @@ export default function ComparePage() {
   return (
     <main className="mx-auto flex h-screen w-full max-w-[1800px] flex-col gap-6 overflow-hidden px-6 py-8">
       <div className="flex shrink-0 flex-wrap items-center gap-6">
-        <h1 className="whitespace-nowrap text-lg font-medium text-neutral-100">llbdiffer — compare two builds</h1>
+        <TopNav current="/compare" />
+        <h1 className="whitespace-nowrap text-lg font-medium text-neutral-100">Compare two builds</h1>
         <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
           <FileChip label="First build (.dot)" file={leftFile} onChange={setLeftFile} />
           <FileChip label="Second build (.dot)" file={rightFile} onChange={setRightFile} />
