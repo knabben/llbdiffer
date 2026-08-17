@@ -34,6 +34,24 @@ make lint    # ESLint, run inside a container
 make test    # Vitest unit + integration tests, run inside a container
 ```
 
+### Try it with real examples
+
+`examples/` holds real `buildctl debug dump-llb` output from two slightly
+different Dockerfiles (the second adds one package) — genuine BuildKit
+data, not hand-authored fixtures:
+
+- `examples/dot/{before,after}.dot` — try at `/compare` (`POST
+  /api/artifacts` / `/api/compare`)
+- `examples/llbjson/{before,after}.json` — try at `/determinism` (`POST
+  /api/determinism`)
+
+Comparing the two tells the same story two different ways: `/compare`'s
+id-based diff shows nearly the whole graph as added/removed (every
+downstream digest changed, including the unrelated `local://context`
+node), while `/determinism` correctly collapses that into one root-cause
+finding with a blast radius, plus the unrelated Structural/Heuristic
+findings shown once each.
+
 ## API
 
 ### `POST /api/artifacts`
@@ -74,6 +92,39 @@ The returned narrative is advisory commentary, not verified fact — the
 frontend always renders it in a panel separate from the diff graphs and
 diff summary (constitution Principle IV).
 
+### `POST /api/determinism`
+
+A separate, JSON-only analysis path — see `specs/004-llb-root-cause-analysis/`.
+Unlike every other endpoint above, it does **not** accept `.dot`; it reads
+BuildKit's LLB **JSON** debug dump (`buildctl debug dump-llb`'s default
+output), because only that format exposes the per-field data (env, mounts,
+timestamps, source pins, cache flags) this analysis reads. Upload one file
+for a single-artifact determinism report (guaranteed-bad constructs and
+advisory pattern matches — no second build required), or two files
+(`primary`, `secondary`) for a full root-cause comparison: operations are
+aligned structurally (not by content-addressed id, so one changed op
+doesn't rename every downstream op into an unrelated "difference"), root
+causes are separated from their cascaded descendants, and each root cause
+is ranked by how many downstream operations it invalidates ("blast
+radius").
+
+```bash
+# Single-artifact determinism report
+curl -X POST http://localhost:3000/api/determinism -F "primary=@before.json"
+
+# Two-artifact root-cause comparison
+curl -X POST http://localhost:3000/api/determinism \
+  -F "primary=@before.json" \
+  -F "secondary=@after.json"
+```
+
+Try it in the browser at `/determinism`. Full request/response contract:
+[specs/004-llb-root-cause-analysis/contracts/determinism.md](specs/004-llb-root-cause-analysis/contracts/determinism.md).
+Like `/api/analyze`, findings are advisory where they're pattern-based
+(labeled "Heuristic"); unlike `/api/analyze`, this endpoint makes zero
+outbound network calls — every finding is deterministic, rule-based
+computation over the parsed LLB fields, not an LLM call.
+
 ## Extracting a `.dot` file from a Dockerfile
 
 BuildKit's `buildctl debug dump-llb --dot` command turns a serialized LLB
@@ -96,3 +147,11 @@ go run ./examples/dockerfile2llb < /path/to/your/Dockerfile \
 Run it once per build you want to compare (e.g. before and after a
 Dockerfile change) to produce the two `.dot` files this project's
 endpoints expect.
+
+For `/api/determinism`, drop the `--dot` flag to get the default JSON
+output instead:
+
+```bash
+go run ./examples/dockerfile2llb < /path/to/your/Dockerfile \
+  | buildctl debug dump-llb > before.json
+```

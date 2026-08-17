@@ -24,7 +24,7 @@ describe('validateAndAdapt', () => {
     const result = validateAndAdapt(readDotFixture('valid-before.dot'));
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.artifact.schemaVersion).toBe('1.0.0');
+      expect(result.artifact.schemaVersion).toBe('1.1.0');
     }
   });
 
