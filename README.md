@@ -34,6 +34,24 @@ make lint    # ESLint, run inside a container
 make test    # Vitest unit + integration tests, run inside a container
 ```
 
+### Try it with real examples
+
+`examples/` holds real `buildctl debug dump-llb` output from two slightly
+different Dockerfiles (the second adds one package) — genuine BuildKit
+data, not hand-authored fixtures:
+
+- `examples/dot/{before,after}.dot` — try at `/compare` (`POST
+  /api/artifacts` / `/api/compare`)
+- `examples/llbjson/{before,after}.json` — try at `/determinism` (`POST
+  /api/determinism`)
+
+Comparing the two tells the same story two different ways: `/compare`'s
+id-based diff shows nearly the whole graph as added/removed (every
+downstream digest changed, including the unrelated `local://context`
+node), while `/determinism` correctly collapses that into one root-cause
+finding with a blast radius, plus the unrelated Structural/Heuristic
+findings shown once each.
+
 ## API
 
 ### `POST /api/artifacts`
