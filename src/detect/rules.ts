@@ -18,6 +18,8 @@ export interface Finding {
   affected: FindingAffected[];
   /** Present only for Proven root-cause findings (Pass 2). */
   blastRadius?: number;
+  /** The "after"-side node ids counted in `blastRadius` — lets a graph view highlight them, not just report a count. */
+  blastRadiusNodeIds?: string[];
 }
 
 export interface StructuralChange {

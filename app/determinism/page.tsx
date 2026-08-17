@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { DeterminismUpload } from '../../components/DeterminismUpload';
 import { DeterminismPanel } from '../../components/DeterminismPanel';
+import { DeterminismGraphPanel } from '../../components/DeterminismGraphPanel';
 import type { DeterminismReport } from '../../src/detect/rules';
 
 interface FieldError {
@@ -14,15 +15,22 @@ type SubmitError =
   | { kind: 'validation'; primary: FieldError | null; secondary: FieldError | null }
   | { kind: 'unexpected'; message: string };
 
+interface AnalysisResult {
+  report: DeterminismReport;
+  primary: { dot: string };
+  secondary?: { dot: string };
+}
+
 export default function DeterminismPage() {
-  const [report, setReport] = useState<DeterminismReport | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<SubmitError | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   async function handleSubmit(primary: File, secondary: File | null) {
     setSubmitting(true);
     setError(null);
-    setReport(null);
+    setResult(null);
 
     try {
       const form = new FormData();
@@ -42,8 +50,8 @@ export default function DeterminismPage() {
         return;
       }
 
-      const body: { report: DeterminismReport } = await response.json();
-      setReport(body.report);
+      const body: AnalysisResult = await response.json();
+      setResult(body);
     } catch {
       setError({ kind: 'unexpected', message: 'Analysis failed due to a network error. Please try again.' });
     } finally {
@@ -70,9 +78,30 @@ export default function DeterminismPage() {
         </div>
       )}
 
-      {report && (
-        <div className="min-h-0 flex-1 overflow-auto">
-          <DeterminismPanel report={report} />
+      {result && (
+        <div className="flex min-h-0 flex-1 flex-col gap-6">
+          <div className={`grid min-h-0 flex-[3] grid-cols-1 gap-6 ${result.secondary ? 'md:grid-cols-2' : ''}`}>
+            <DeterminismGraphPanel
+              title={result.secondary ? 'First build' : 'Build'}
+              dot={result.primary.dot}
+              highlightedId={highlightedId}
+              onHoverId={setHighlightedId}
+            />
+            {result.secondary && (
+              <DeterminismGraphPanel
+                title="Second build"
+                dot={result.secondary.dot}
+                highlightedId={highlightedId}
+                onHoverId={setHighlightedId}
+              />
+            )}
+          </div>
+          <DeterminismPanel
+            report={result.report}
+            highlightedId={highlightedId}
+            onHoverId={setHighlightedId}
+            className="max-h-80 shrink-0 overflow-auto"
+          />
         </div>
       )}
     </main>

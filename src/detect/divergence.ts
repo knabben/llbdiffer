@@ -99,10 +99,15 @@ function inputsContentIdentical(
   return true;
 }
 
-/** Count of distinct aligned pairs reachable from a root cause, following the "after" artifact's forward edges. */
-function blastRadius(pair: AlignedPair, right: Artifact): number {
-  if (!pair.right) return 0;
+/**
+ * Distinct nodes reachable from a root cause, following the "after"
+ * artifact's forward edges — the count is the blast-radius headline
+ * number; the id set is what lets a graph view actually highlight them
+ * (not just report a count with nothing to point at).
+ */
+function blastRadiusNodes(pair: AlignedPair, right: Artifact): Set<string> {
   const visited = new Set<string>();
+  if (!pair.right) return visited;
   const stack = [pair.right.id];
   while (stack.length > 0) {
     const id = stack.pop()!;
@@ -113,7 +118,7 @@ function blastRadius(pair: AlignedPair, right: Artifact): number {
       }
     }
   }
-  return visited.size;
+  return visited;
 }
 
 function structuralChangesOf(pairs: AlignedPair[]): StructuralChange[] {
@@ -153,10 +158,12 @@ export function buildComparisonReport(left: Artifact, right: Artifact): Determin
     if (pair.status !== 'modified' || !pair.left || !pair.right) continue;
     if (!inputsContentIdentical(pair, left, right, index)) continue; // cascaded — attributed to its upstream root cause instead
 
-    const radius = blastRadius(pair, right);
+    const radiusNodes = blastRadiusNodes(pair, right);
+    const radius = radiusNodes.size;
+    const radiusNodeIds = Array.from(radiusNodes);
     const rule = detectProvenFinding(pair.left, pair.right);
     if (rule) {
-      provenFindings.push({ ...rule, blastRadius: radius });
+      provenFindings.push({ ...rule, blastRadius: radius, blastRadiusNodeIds: radiusNodeIds });
     } else {
       // US4: no known rule matched — report the raw divergence, with a
       // field-level summary of what actually changed, rather than dropping
@@ -171,6 +178,7 @@ export function buildComparisonReport(left: Artifact, right: Artifact): Determin
           { nodeId: pair.right.id, label: pair.right.label, side: 'right' },
         ],
         blastRadius: radius,
+        blastRadiusNodeIds: radiusNodeIds,
       });
     }
   }

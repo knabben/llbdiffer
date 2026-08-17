@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { validateUploadedLlbField } from '../../../src/validation/llbArtifact';
 import { buildComparisonReport, buildSingleArtifactReport } from '../../../src/detect/divergence';
+import { renderDeterminismDot } from '../../../src/detect/renderDot';
 
 export async function POST(request: Request): Promise<NextResponse> {
   const form = await request.formData();
@@ -26,9 +27,21 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const report = secondaryResult
-    ? buildComparisonReport(primary.artifact, secondaryResult.artifact)
-    : buildSingleArtifactReport(primary.artifact);
+  if (!secondaryResult) {
+    const report = buildSingleArtifactReport(primary.artifact);
+    return NextResponse.json(
+      { report, primary: { dot: renderDeterminismDot(primary.artifact, report, undefined) } },
+      { status: 200 },
+    );
+  }
 
-  return NextResponse.json({ report }, { status: 200 });
+  const report = buildComparisonReport(primary.artifact, secondaryResult.artifact);
+  return NextResponse.json(
+    {
+      report,
+      primary: { dot: renderDeterminismDot(primary.artifact, report, 'left') },
+      secondary: { dot: renderDeterminismDot(secondaryResult.artifact, report, 'right') },
+    },
+    { status: 200 },
+  );
 }

@@ -18,6 +18,8 @@ describe('POST /api/determinism - single-artifact mode (US1)', () => {
     expect(body.report.mode).toBe('single');
     expect(body.report.identical).toBe(false);
     expect(body.report.findings.some((f: { causeCode: string }) => f.causeCode === 'UNPINNED_BASE')).toBe(true);
+    expect(body.primary.dot).toContain('digraph');
+    expect(body.secondary).toBeUndefined();
   });
 
   it('states nothing was found for a clean artifact', async () => {

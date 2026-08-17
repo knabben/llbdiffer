@@ -21,6 +21,9 @@ describe('POST /api/determinism - comparison mode (US2)', () => {
     expect(proven).toHaveLength(1);
     expect(proven[0].causeCode).toBe('UNSORTED_ENV');
     expect(proven[0].blastRadius).toBe(2);
+    expect(proven[0].blastRadiusNodeIds).toHaveLength(2);
+    expect(body.primary.dot).toContain('digraph');
+    expect(body.secondary.dot).toContain('digraph');
   });
 
   it('reports identical:true for two identical artifacts', async () => {
