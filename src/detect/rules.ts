@@ -4,6 +4,8 @@ export type ConfidenceTier = 'proven' | 'structural' | 'heuristic';
 
 export interface FindingAffected {
   nodeId: string;
+  /** Human-readable command/identifier for this node (`Node.label`) — a raw digest alone doesn't tell you which build step this is. */
+  label: string;
   side?: 'left' | 'right';
 }
 
@@ -20,6 +22,7 @@ export interface Finding {
 
 export interface StructuralChange {
   nodeId: string;
+  label: string;
   side: 'left' | 'right';
   status: 'added' | 'removed' | 'moved';
 }
@@ -88,7 +91,7 @@ export function nodeContentEqual(a: Node, b: Node): boolean {
 // --- Structural tier (single-artifact, guaranteed-bad constructs) ---
 
 function affectedOf(node: Node, side?: 'left' | 'right'): FindingAffected[] {
-  return [{ nodeId: node.id, side }];
+  return [{ nodeId: node.id, label: node.label, side }];
 }
 
 export function detectStructuralFindings(node: Node, side?: 'left' | 'right'): Finding[] {
@@ -302,8 +305,8 @@ function provenFinding(causeCode: string, message: string, fix: string, left: No
     message,
     fix,
     affected: [
-      { nodeId: left.id, side: 'left' },
-      { nodeId: right.id, side: 'right' },
+      { nodeId: left.id, label: left.label, side: 'left' },
+      { nodeId: right.id, label: right.label, side: 'right' },
     ],
   };
 }
@@ -399,4 +402,40 @@ export function detectProvenFinding(left: Node, right: Node): Finding | null {
   }
 
   return null;
+}
+
+/**
+ * A human-readable summary of what actually differs for a root-cause pair
+ * that matched no named Proven rule (US4's raw-diff fallback) — names the
+ * specific field and both values where a summary is available, instead of
+ * a bare "content differs" that gives the engineer nothing to act on.
+ */
+export function describeDivergence(left: Node, right: Node): string {
+  if (!left.llb || !right.llb) return "This operation's content differs between the two builds.";
+  const a = left.llb.op;
+  const b = right.llb.op;
+  if (a.kind !== b.kind) return `Operation kind differs: "${a.kind}" → "${b.kind}".`;
+
+  if (a.kind === 'exec' && b.kind === 'exec') {
+    if (!arraysEqual(a.meta.args, b.meta.args)) {
+      return `Command differs: "${a.meta.args.join(' ')}" → "${b.meta.args.join(' ')}".`;
+    }
+    if (!arraysEqual(a.meta.env, b.meta.env)) {
+      return `Environment variables differ: [${a.meta.env.join(', ')}] → [${b.meta.env.join(', ')}].`;
+    }
+    if (a.meta.cwd !== b.meta.cwd) return `Working directory differs: "${a.meta.cwd}" → "${b.meta.cwd}".`;
+    if (a.meta.user !== b.meta.user) return `User differs: "${a.meta.user}" → "${b.meta.user}".`;
+    return "This step's content differs in a field not covered by a summary (mounts/network/security/secrets) — inspect both artifacts directly.";
+  }
+
+  if (a.kind === 'source' && b.kind === 'source') {
+    if (a.identifier !== b.identifier) return `Source identifier differs: "${a.identifier}" → "${b.identifier}".`;
+    return `Source attributes differ for "${a.identifier}".`;
+  }
+
+  if (a.kind === 'file' && b.kind === 'file') {
+    return "This file operation's actions differ between the two builds — inspect both artifacts directly.";
+  }
+
+  return "This operation's content differs between the two builds.";
 }

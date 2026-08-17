@@ -1,6 +1,6 @@
 'use client';
 
-import type { ConfidenceTier, DeterminismReport, Finding, StructuralChange } from '../src/detect/rules';
+import type { ConfidenceTier, DeterminismReport, Finding, FindingAffected, StructuralChange } from '../src/detect/rules';
 
 export interface DeterminismPanelProps {
   report: DeterminismReport;
@@ -9,6 +9,25 @@ export interface DeterminismPanelProps {
 
 const TIER_LABEL: Record<ConfidenceTier, string> = { proven: 'Proven', structural: 'Structural', heuristic: 'Heuristic' };
 const TIER_COLOR: Record<ConfidenceTier, string> = { proven: 'text-removed', structural: 'text-accent', heuristic: 'text-shared' };
+
+function AffectedList({ affected }: { affected: FindingAffected[] }) {
+  return (
+    <ul className="mt-2 space-y-0.5 border-t border-border/60 pt-2">
+      {affected.map((a, i) => (
+        <li key={`${a.nodeId}-${a.side ?? ''}-${i}`} className="flex items-baseline gap-2 truncate text-xs">
+          {a.side && (
+            <span className={`shrink-0 uppercase tracking-wide ${a.side === 'left' ? 'text-removed' : 'text-added'}`}>
+              {a.side}
+            </span>
+          )}
+          <span className="truncate font-mono text-neutral-300" title={a.nodeId}>
+            {a.label}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function FindingCard({ finding }: { finding: Finding }) {
   const isFallback = finding.causeCode === 'UNKNOWN_DIVERGENCE';
@@ -32,6 +51,7 @@ function FindingCard({ finding }: { finding: Finding }) {
       <p className="text-neutral-300">{finding.message}</p>
       {finding.fix && <p className="mt-1 text-xs text-accent">Fix: {finding.fix}</p>}
       {isFallback && <p className="mt-1 text-xs italic text-neutral-500">No known pattern matched — raw difference only.</p>}
+      <AffectedList affected={finding.affected} />
     </li>
   );
 }
@@ -43,7 +63,7 @@ function StructuralChangesList({ changes }: { changes: StructuralChange[] }) {
       <h3 className="mb-1 text-xs uppercase tracking-wide text-neutral-500">Structural changes ({changes.length})</h3>
       <ul className="space-y-0.5 font-mono text-xs text-neutral-400">
         {changes.map((change, i) => (
-          <li key={`${change.nodeId}-${change.side}-${i}`}>
+          <li key={`${change.nodeId}-${change.side}-${i}`} className="truncate" title={change.nodeId}>
             <span
               className={
                 change.status === 'added' ? 'text-added' : change.status === 'removed' ? 'text-removed' : 'text-accent'
@@ -51,7 +71,7 @@ function StructuralChangesList({ changes }: { changes: StructuralChange[] }) {
             >
               {change.status}
             </span>{' '}
-            ({change.side}) {change.nodeId}
+            ({change.side}) {change.label}
           </li>
         ))}
       </ul>

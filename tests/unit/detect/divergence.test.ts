@@ -112,8 +112,8 @@ describe('buildComparisonReport — Structural/Heuristic shown in both modes (Cl
     const clockTimestamp = report.findings.filter((f) => f.causeCode === 'CLOCK_TIMESTAMP');
     expect(clockTimestamp).toHaveLength(1);
     expect(clockTimestamp[0].affected).toEqual([
-      { nodeId: 'sha256:left-b', side: 'left' },
-      { nodeId: 'sha256:right-b', side: 'right' },
+      { nodeId: 'sha256:left-b', label: 'file(1 action)', side: 'left' },
+      { nodeId: 'sha256:right-b', label: 'file(1 action)', side: 'right' },
     ]);
   });
 });
@@ -125,6 +125,7 @@ describe('buildComparisonReport — structural changes (US3)', () => {
     const report = buildComparisonReport(left, right);
     expect(report.structuralChanges).toContainEqual({
       nodeId: 'sha256:ffff000000000000000000000000000000000000000000000000000000005',
+      label: '/bin/sh -c echo step-two-new',
       side: 'right',
       status: 'added',
     });

@@ -28,7 +28,7 @@ describe('DeterminismPanel', () => {
           causeCode: 'UNPINNED_BASE',
           message: 'Source references a mutable tag with no @sha256 digest pin.',
           fix: 'Pin the base image to a digest.',
-          affected: [{ nodeId: 'sha256:abc' }],
+          affected: [{ nodeId: 'sha256:abc', label: 'docker-image://alpine:3.19' }],
         },
       ],
     };
@@ -37,6 +37,7 @@ describe('DeterminismPanel', () => {
     expect(screen.getByText('UNPINNED_BASE')).toBeInTheDocument();
     expect(screen.getByText(/mutable tag/)).toBeInTheDocument();
     expect(screen.getByText(/Pin the base image/)).toBeInTheDocument();
+    expect(screen.getByText('docker-image://alpine:3.19')).toBeInTheDocument();
   });
 
   it('shows the blast radius for a proven root-cause finding', () => {
@@ -51,7 +52,7 @@ describe('DeterminismPanel', () => {
           causeCode: 'UNSORTED_ENV',
           message: 'Environment variables contain the same entries in a different order.',
           fix: 'Sort environment variables.',
-          affected: [{ nodeId: 'sha256:x', side: 'left' }],
+          affected: [{ nodeId: 'sha256:x', label: '/bin/sh -c apk add curl', side: 'left' }],
           blastRadius: 46,
         },
       ],
@@ -71,7 +72,7 @@ describe('DeterminismPanel', () => {
           tier: 'proven',
           causeCode: 'UNKNOWN_DIVERGENCE',
           message: "This operation's content differs, but no known pattern matches the difference.",
-          affected: [{ nodeId: 'sha256:x', side: 'left' }],
+          affected: [{ nodeId: 'sha256:x', label: '/bin/sh -c run-left', side: 'left' }],
         },
       ],
     };
@@ -85,10 +86,11 @@ describe('DeterminismPanel', () => {
       mode: 'comparison',
       identical: false,
       findings: [],
-      structuralChanges: [{ nodeId: 'sha256:new', side: 'right', status: 'added' }],
+      structuralChanges: [{ nodeId: 'sha256:new', label: '/bin/sh -c echo new-step', side: 'right', status: 'added' }],
     };
     render(<DeterminismPanel report={report} />);
     expect(screen.getByLabelText('Structural changes')).toBeInTheDocument();
     expect(screen.getByText('added')).toBeInTheDocument();
+    expect(screen.getByText(/echo new-step/)).toBeInTheDocument();
   });
 });

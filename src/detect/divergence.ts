@@ -1,6 +1,7 @@
 import type { Artifact } from '../models/artifact';
 import { alignArtifacts, type AlignedPair } from '../align/shapeKey';
 import {
+  describeDivergence,
   detectHeuristicFindings,
   detectProvenFinding,
   detectStructuralFindings,
@@ -118,11 +119,15 @@ function blastRadius(pair: AlignedPair, right: Artifact): number {
 function structuralChangesOf(pairs: AlignedPair[]): StructuralChange[] {
   const changes: StructuralChange[] = [];
   for (const pair of pairs) {
-    if (pair.status === 'added' && pair.right) changes.push({ nodeId: pair.right.id, side: 'right', status: 'added' });
-    if (pair.status === 'removed' && pair.left) changes.push({ nodeId: pair.left.id, side: 'left', status: 'removed' });
+    if (pair.status === 'added' && pair.right) {
+      changes.push({ nodeId: pair.right.id, label: pair.right.label, side: 'right', status: 'added' });
+    }
+    if (pair.status === 'removed' && pair.left) {
+      changes.push({ nodeId: pair.left.id, label: pair.left.label, side: 'left', status: 'removed' });
+    }
     if (pair.status === 'moved' && pair.left && pair.right) {
-      changes.push({ nodeId: pair.left.id, side: 'left', status: 'moved' });
-      changes.push({ nodeId: pair.right.id, side: 'right', status: 'moved' });
+      changes.push({ nodeId: pair.left.id, label: pair.left.label, side: 'left', status: 'moved' });
+      changes.push({ nodeId: pair.right.id, label: pair.right.label, side: 'right', status: 'moved' });
     }
   }
   return changes;
@@ -153,16 +158,17 @@ export function buildComparisonReport(left: Artifact, right: Artifact): Determin
     if (rule) {
       provenFindings.push({ ...rule, blastRadius: radius });
     } else {
-      // US4: no known rule matched — report the raw divergence rather than
-      // dropping it silently.
+      // US4: no known rule matched — report the raw divergence, with a
+      // field-level summary of what actually changed, rather than dropping
+      // it silently or leaving the engineer with just "content differs".
       provenFindings.push({
         id: `UNKNOWN_DIVERGENCE:${pair.left.id}`,
         tier: 'proven',
         causeCode: 'UNKNOWN_DIVERGENCE',
-        message: "This operation's content differs between the two builds, but no known pattern matches the difference.",
+        message: describeDivergence(pair.left, pair.right),
         affected: [
-          { nodeId: pair.left.id, side: 'left' },
-          { nodeId: pair.right.id, side: 'right' },
+          { nodeId: pair.left.id, label: pair.left.label, side: 'left' },
+          { nodeId: pair.right.id, label: pair.right.label, side: 'right' },
         ],
         blastRadius: radius,
       });

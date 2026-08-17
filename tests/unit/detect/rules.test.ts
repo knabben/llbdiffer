@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { adaptLlbJson } from '../../../src/adapters/llbjson/adapt';
 import {
+  describeDivergence,
   detectHeuristicFindings,
   detectProvenFinding,
   detectStructuralFindings,
@@ -200,8 +201,8 @@ describe('detectProvenFinding', () => {
     expect(finding?.causeCode).toBe('UNSORTED_ENV');
     expect(finding?.tier).toBe('proven');
     expect(finding?.affected).toEqual([
-      { nodeId: 'sha256:left', side: 'left' },
-      { nodeId: 'sha256:right', side: 'right' },
+      { nodeId: 'sha256:left', label: 'sha256:left', side: 'left' },
+      { nodeId: 'sha256:right', label: 'sha256:right', side: 'right' },
     ]);
   });
 
@@ -258,5 +259,49 @@ describe('detectProvenFinding', () => {
       llb: { op: { kind: 'file', actions: [{ copy: { timestamp: 1800000000 } }] }, opMetadata: { ignoreCache: false } },
     };
     expect(detectProvenFinding(left, right)?.causeCode).toBe('TIMESTAMP_DRIFT');
+  });
+});
+
+describe('describeDivergence (US4 raw-diff fallback)', () => {
+  function execNode(id: string, args: string[], env: string[] = []): Node {
+    return {
+      id,
+      label: args.join(' '),
+      metadata: { command: args.join(' ') },
+      llb: {
+        op: { kind: 'exec', meta: { args, env, cwd: '/', user: 'root' }, mounts: [], network: 'UNSET', security: 'SANDBOX' },
+        opMetadata: { ignoreCache: false },
+      },
+    };
+  }
+
+  it('names the command change when args differ', () => {
+    const left = execNode('sha256:left', ['/bin/sh', '-c', 'apk add curl']);
+    const right = execNode('sha256:right', ['/bin/sh', '-c', 'apk add curl git']);
+    expect(describeDivergence(left, right)).toBe('Command differs: "/bin/sh -c apk add curl" → "/bin/sh -c apk add curl git".');
+  });
+
+  it('falls back to the env diff when args are identical but env differs', () => {
+    const left = execNode('sha256:left', ['/bin/sh'], ['A=1']);
+    const right = execNode('sha256:right', ['/bin/sh'], ['A=2']);
+    expect(describeDivergence(left, right)).toContain('Environment variables differ');
+  });
+
+  it('names the identifier change for a differing source op', () => {
+    const left: Node = {
+      id: 'sha256:left',
+      label: 'l',
+      metadata: { command: 'l' },
+      llb: { op: { kind: 'source', identifier: 'docker-image://alpine:3.19', attrs: {} }, opMetadata: { ignoreCache: false } },
+    };
+    const right: Node = {
+      id: 'sha256:right',
+      label: 'r',
+      metadata: { command: 'r' },
+      llb: { op: { kind: 'source', identifier: 'docker-image://alpine:3.20', attrs: {} }, opMetadata: { ignoreCache: false } },
+    };
+    expect(describeDivergence(left, right)).toBe(
+      'Source identifier differs: "docker-image://alpine:3.19" → "docker-image://alpine:3.20".',
+    );
   });
 });
