@@ -19,8 +19,8 @@ describe('POST /api/artifacts - happy path (US1)', () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.left.schemaVersion).toBe('1.0.0');
-    expect(body.right.schemaVersion).toBe('1.0.0');
+    expect(body.left.schemaVersion).toBe('1.1.0');
+    expect(body.right.schemaVersion).toBe('1.1.0');
     expect(Array.isArray(body.left.nodes)).toBe(true);
     expect(body.left.nodes.length).toBe(6);
     expect(Array.isArray(body.left.edges)).toBe(true);
