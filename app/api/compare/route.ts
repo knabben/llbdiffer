@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
-import { validateUploadedField } from '../../../src/validation/artifact';
+import { validateUploadedLlbField } from '../../../src/validation/llbArtifact';
 import { classify, buildDiffSummary, isIdentical } from '../../../src/compare/artifact';
 import { renderClassifiedDot } from '../../../src/adapters/dot/render';
 
 export async function POST(request: Request): Promise<NextResponse> {
   const form = await request.formData();
 
-  const [left, right] = await Promise.all([
-    validateUploadedField(form, 'left'),
-    validateUploadedField(form, 'right'),
+  const [leftResult, rightResult] = await Promise.all([
+    validateUploadedLlbField(form, 'left', true),
+    validateUploadedLlbField(form, 'right', true),
   ]);
+
+  // `required: true` for both fields means validateUploadedLlbField never
+  // returns null for either.
+  const left = leftResult!;
+  const right = rightResult!;
 
   if (!left.ok || !right.ok) {
     return NextResponse.json(
