@@ -40,10 +40,10 @@ function FileChip({
   return (
     <label className="flex min-w-[280px] cursor-pointer items-center gap-2 rounded-lg border border-border bg-panel px-4 py-2 text-sm text-neutral-300 hover:border-neutral-600">
       <span className="whitespace-nowrap text-xs uppercase tracking-wide text-neutral-500">{label}:</span>
-      <span className="truncate">{file ? file.name : 'Select a .dot file…'}</span>
+      <span className="truncate">{file ? file.name : 'Select a JSON file…'}</span>
       <input
         type="file"
-        accept=".dot"
+        accept=".json"
         className="sr-only"
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
       />
@@ -143,8 +143,8 @@ export default function ComparePage() {
         <TopNav current="/compare" />
         <h1 className="whitespace-nowrap text-lg font-medium text-neutral-100">Compare two builds</h1>
         <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-          <FileChip label="First build (.dot)" file={leftFile} onChange={setLeftFile} />
-          <FileChip label="Second build (.dot)" file={rightFile} onChange={setRightFile} />
+          <FileChip label="First build (JSON)" file={leftFile} onChange={setLeftFile} />
+          <FileChip label="Second build (JSON)" file={rightFile} onChange={setRightFile} />
           <button
             type="submit"
             disabled={!canSubmit}

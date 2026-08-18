@@ -9,8 +9,8 @@ vi.mock('../../../../components/DiffSummaryPanel', () => ({
   DiffSummaryPanel: () => <div>summary panel</div>,
 }));
 
-function makeDotFile(name: string): File {
-  return new File(['digraph { a -> b; }'], name, { type: 'text/vnd.graphviz' });
+function makeJsonFile(name: string): File {
+  return new File(['{}'], name, { type: 'application/json' });
 }
 
 describe('ComparePage (US1: submit gating)', () => {
@@ -20,11 +20,11 @@ describe('ComparePage (US1: submit gating)', () => {
     const submit = screen.getByRole('button', { name: /compare/i });
     expect(submit).toBeDisabled();
 
-    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(\.dot\)/i);
-    fireEvent.change(leftInput, { target: { files: [makeDotFile('left.dot')] } });
+    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(json\)/i);
+    fireEvent.change(leftInput, { target: { files: [makeJsonFile('left.json')] } });
     expect(submit).toBeDisabled();
 
-    fireEvent.change(rightInput, { target: { files: [makeDotFile('right.dot')] } });
+    fireEvent.change(rightInput, { target: { files: [makeJsonFile('right.json')] } });
     expect(submit).not.toBeDisabled();
   });
 });
@@ -39,7 +39,7 @@ describe('ComparePage (US4: error handling)', () => {
         json: () =>
           Promise.resolve({
             errors: {
-              left: { code: 'DOT_PARSE_ERROR', message: 'Line 3: unexpected token' },
+              left: { code: 'LLB_JSON_PARSE_ERROR', message: 'Line 3: unexpected token' },
               right: null,
             },
           }),
@@ -54,9 +54,9 @@ describe('ComparePage (US4: error handling)', () => {
   it('shows a specific per-file error message when the API returns 400', async () => {
     render(<ComparePage />);
 
-    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(\.dot\)/i);
-    fireEvent.change(leftInput, { target: { files: [makeDotFile('left.dot')] } });
-    fireEvent.change(rightInput, { target: { files: [makeDotFile('right.dot')] } });
+    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(json\)/i);
+    fireEvent.change(leftInput, { target: { files: [makeJsonFile('left.json')] } });
+    fireEvent.change(rightInput, { target: { files: [makeJsonFile('right.json')] } });
     fireEvent.click(screen.getByRole('button', { name: /compare/i }));
 
     await waitFor(() => {
@@ -68,9 +68,9 @@ describe('ComparePage (US4: error handling)', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
 
     render(<ComparePage />);
-    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(\.dot\)/i);
-    fireEvent.change(leftInput, { target: { files: [makeDotFile('left.dot')] } });
-    fireEvent.change(rightInput, { target: { files: [makeDotFile('right.dot')] } });
+    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(json\)/i);
+    fireEvent.change(leftInput, { target: { files: [makeJsonFile('left.json')] } });
+    fireEvent.change(rightInput, { target: { files: [makeJsonFile('right.json')] } });
     fireEvent.click(screen.getByRole('button', { name: /compare/i }));
 
     await waitFor(() => {
@@ -101,9 +101,9 @@ describe('ComparePage (US1/US2: AI analysis stays separate from the diff)', () =
   });
 
   async function runComparison() {
-    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(\.dot\)/i);
-    fireEvent.change(leftInput, { target: { files: [makeDotFile('left.dot')] } });
-    fireEvent.change(rightInput, { target: { files: [makeDotFile('right.dot')] } });
+    const [leftInput, rightInput] = screen.getAllByLabelText(/build \(json\)/i);
+    fireEvent.change(leftInput, { target: { files: [makeJsonFile('left.json')] } });
+    fireEvent.change(rightInput, { target: { files: [makeJsonFile('right.json')] } });
     fireEvent.click(screen.getByRole('button', { name: /compare/i }));
     await waitFor(() => expect(screen.getByText('summary panel')).toBeInTheDocument());
   }
